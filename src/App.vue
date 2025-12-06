@@ -3,10 +3,9 @@
     <MapView />
   </div>
 </template>
-
-<script lang="ts">
-import MapView from './components/MapView.vue';
-export default {
-  components: { MapView }
-}
+<script setup lang="ts">
+import MapView from './components/MapView.vue'
 </script>
+<style>
+/* optional global styles */
+</style>
