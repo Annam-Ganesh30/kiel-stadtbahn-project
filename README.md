@@ -1,5 +1,55 @@
-# Vue 3 + TypeScript + Vite
+# Kiel Stadtbahn Simulator 🚆  
+```
+cost = distance + transferPenalty (if line changes)
+```
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+This produces realistic routes.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+### Example: Wikkanal → Samwerstrasse  
+Correct optimal route:
+
+```
+Wikkanal → Auberg → Knorrstrasse → Elendsredder → Leibnizstrasse 
+→ Unisportstätten → Uniipn → Uniaudimax → Samwerstrasse
+```
+
+Not the longer route via Hauptbahnhof.
+
+---
+### Run ESLint
+```bash
+npm run lint
+```
+
+✅ The codebase passes ESLint without errors or warnings.
+
+This ensures consistent code style, best practices, and maintainability according to course requirements.
+
+---
+
+##  Accessibility 
+
+- Fully keyboard-navigable  
+- Buttons have accessible labels  
+- Color contrast validated  
+- Screen-reader friendly structure  
+
+⚠️ Note:  
+OpenLayers uses canvas-based rendering, which cannot fully achieve 100% ARIA compliance; therefore, Lighthouse Accessibility score may be slightly lower.
+
+---
+
+## 🔗 Version Control
+
+Repository maintained on **GitHub** using:
+
+```
+main → production branch
+GitHub Personal Access Token (PAT) for authentication
+```
+
+---
+
+## License
+This project is created for academic coursework and is not intended for commercial use.
+
