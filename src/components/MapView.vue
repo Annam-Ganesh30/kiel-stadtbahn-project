@@ -23,12 +23,7 @@
 
           <div class="select-wrapper">
             <label class="visually-hidden" for="line-select">Select line</label>
-            <select
-              id="line-select"
-              v-model="state.selectedLine"
-              aria-label="Filter by line"
-              @change="filterByLine"
-            >
+            <select id="line-select" v-model="state.selectedLine" aria-label="Filter by line" @change="filterByLine">
               <option value="">All lines</option>
               <option v-for="ln in availableLines" :key="ln" :value="ln">
                 Line {{ ln }}
@@ -43,14 +38,8 @@
       </header>
 
       <main>
-        <div
-          id="map"
-          ref="mapContainer"
-          tabindex="0"
-          role="application"
-          aria-label="Map showing planned Stadtbahn lines in Kiel"
-          :class="{ 'map-loading': !debug.mapInitialized }"
-        >
+        <div id="map" ref="mapContainer" tabindex="0" role="application"
+          aria-label="Map showing planned Stadtbahn lines in Kiel" :class="{ 'map-loading': !debug.mapInitialized }">
           <div v-if="!debug.mapInitialized" class="map-loading-message">
             <div class="loading-spinner"></div>
             Loading Kiel Stadtbahn Network...
@@ -71,38 +60,23 @@
           </div>
 
           <div class="search-box">
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Search stations..."
-              aria-label="Search stations"
-            />
+            <input type="text" v-model="searchQuery" placeholder="Search stations..." aria-label="Search stations" />
           </div>
 
           <div class="stations-list">
             <ul>
-              <li
-                v-for="(feat, idx) in filteredFeatures"
-                :key="idx"
-                class="station-row"
-                :class="{ 'is-station': feat.geometry.type === 'Point' }"
-              >
+              <li v-for="(feat, idx) in filteredFeatures" :key="idx" class="station-row"
+                :class="{ 'is-station': feat.geometry.type === 'Point' }">
                 <div class="station-controls">
-                  <button
-                    :aria-label="'Set start at ' + (feat.properties.displayName || 'station ' + idx)"
-                    @click="setPointFromFeature(feat, 'start')"
-                    class="start-btn"
-                    :class="{ active: state.start?.info?.displayName === feat.properties.displayName }"
-                  >
+                  <button :aria-label="'Set start at ' + (feat.properties.displayName || 'station ' + idx)"
+                    @click="setPointFromFeature(feat, 'start')" class="start-btn"
+                    :class="{ active: state.start?.info?.displayName === feat.properties.displayName }">
                     <span class="btn-icon">🟢</span> Start
                   </button>
 
-                  <button
-                    :aria-label="'Set end at ' + (feat.properties.displayName || 'station ' + idx)"
-                    @click="setPointFromFeature(feat, 'end')"
-                    class="end-btn"
-                    :class="{ active: state.end?.info?.displayName === feat.properties.displayName }"
-                  >
+                  <button :aria-label="'Set end at ' + (feat.properties.displayName || 'station ' + idx)"
+                    @click="setPointFromFeature(feat, 'end')" class="end-btn"
+                    :class="{ active: state.end?.info?.displayName === feat.properties.displayName }">
                     <span class="btn-icon">🔴</span> End
                   </button>
                 </div>
@@ -112,10 +86,7 @@
                     {{ feat.properties.displayName }}
                   </span>
                   <div class="station-meta">
-                    <span
-                      class="line-badge"
-                      :style="{ backgroundColor: colorForLine(feat.properties.line) }"
-                    >
+                    <span class="line-badge" :style="{ backgroundColor: colorForLine(feat.properties.line) }">
                       Line {{ feat.properties.line }}
                     </span>
                     <span class="feature-type">
@@ -135,12 +106,7 @@
         </aside>
       </main>
     </div>
-    <div
-      v-if="state.animating"
-      class="travel-status"
-      role="status"
-      aria-live="polite"
-    >
+    <div v-if="state.animating" class="travel-status" role="status" aria-live="polite">
       <div class="travel-progress">
         <div class="progress-bar" :style="{ width: travelProgress + '%' }"></div>
       </div>
@@ -206,7 +172,7 @@ type WeightedEdge = { to: string; weight: number }
 
 export default defineComponent({
   name: 'MapView',
-  setup () {
+  setup() {
     const mapContainer = ref<HTMLDivElement | null>(null)
     const map = ref<Map | null>(null)
     const searchQuery = ref('')
@@ -299,7 +265,7 @@ export default defineComponent({
     const TRANSFER_THRESHOLD = 220 // meters (approx in projected units)
     const TRANSFER_PENALTY = 120 // meters penalty added to transfers (tune to prefer staying on line)
 
-    function buildWeightedGraph (): Record<string, WeightedEdge[]> {
+    function buildWeightedGraph(): Record<string, WeightedEdge[]> {
       const graph: Record<string, WeightedEdge[]> = {}
       Object.keys(stationGraph).forEach((k) => {
         graph[k] = []
@@ -310,6 +276,9 @@ export default defineComponent({
         node.neighbors.forEach((nbrKey) => {
           const nbr = stationGraph[nbrKey]
           if (!nbr) return
+          if (!node.coord || !nbr.coord) return
+          // ensure graph entry exists
+          graph[node.key] = graph[node.key] || []
           const dx = node.coord[0] - nbr.coord[0]
           const dy = node.coord[1] - nbr.coord[1]
           const dist = Math.sqrt(dx * dx + dy * dy)
@@ -330,6 +299,7 @@ export default defineComponent({
           // already neighbors? skip
           if (a.neighbors.includes(bKey) || b.neighbors.includes(aKey)) continue
 
+          if (!a.coord || !b.coord) continue
           const dx = a.coord[0] - b.coord[0]
           const dy = a.coord[1] - b.coord[1]
           const dist = Math.sqrt(dx * dx + dy * dy)
@@ -337,6 +307,8 @@ export default defineComponent({
           if (dist <= TRANSFER_THRESHOLD) {
             // transfer weight: physical distance + penalty (to bias against transfers)
             const w = dist + TRANSFER_PENALTY
+            graph[aKey] = graph[aKey] || []
+            graph[bKey] = graph[bKey] || []
             graph[aKey].push({ to: bKey, weight: w })
             graph[bKey].push({ to: aKey, weight: w })
           }
@@ -346,7 +318,7 @@ export default defineComponent({
       return graph
     }
 
-    function dijkstraShortestPath (startKey: string, endKey: string): string[] | null {
+    function dijkstraShortestPath(startKey: string, endKey: string): string[] | null {
       if (!stationGraph[startKey] || !stationGraph[endKey]) return null
       const graph = buildWeightedGraph()
 
@@ -364,7 +336,7 @@ export default defineComponent({
         let u: string | null = null
         let best = Infinity
         for (const k of Object.keys(graph)) {
-          if (!visited.has(k) && dist[k] < best) {
+          if (!visited.has(k) && (dist[k] ?? Infinity) < best) {
             best = dist[k]
             u = k
           }
@@ -377,8 +349,8 @@ export default defineComponent({
         const edges = graph[u] || []
         for (const edge of edges) {
           if (visited.has(edge.to)) continue
-          const alt = dist[u] + edge.weight
-          if (alt < dist[edge.to]) {
+          const alt = (dist[u] ?? Infinity) + edge.weight
+          if (alt < (dist[edge.to] ?? Infinity)) {
             dist[edge.to] = alt
             prev[edge.to] = u
           }
@@ -398,7 +370,7 @@ export default defineComponent({
 
     /* === Styles & Layers === */
 
-    function colorForLine (id: string | undefined): string {
+    function colorForLine(id: string | undefined): string {
       const colorMap: { [key: string]: string } = {
         1: '#FF0000',
         2: '#008000',
@@ -608,7 +580,7 @@ export default defineComponent({
       }
     })
 
-    async function loadStadtbahnGeoJSON (vecSource: VectorSource) {
+    async function loadStadtbahnGeoJSON(vecSource: VectorSource) {
       try {
         const serviceUrls = [
           '/gis-proxy/geodatenextern/rest/services/Stadtplan/Stadtbahn_WMS/MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson',
@@ -649,7 +621,7 @@ export default defineComponent({
       }
     }
 
-    function processGeoJSONData (gj: any, vecSource: VectorSource) {
+    function processGeoJSONData(gj: any, vecSource: VectorSource) {
       const normalizedFeatures: LineFeature[] = gj.features.map((f: any) => {
         const p = f.properties || {}
         const lineNr =
@@ -701,7 +673,7 @@ export default defineComponent({
 
     /* === Demo data (restored) === */
 
-    function createDemoData (vecSource: VectorSource) {
+    function createDemoData(vecSource: VectorSource) {
       const stations: Record<string, number[]> = {
         rungholtplatz: fromLonLat([10.085, 54.345]),
         sylterbogen: fromLonLat([10.095, 54.34]),
@@ -896,7 +868,7 @@ export default defineComponent({
 
     /* === set start/end from a feature === */
 
-    function setPointFromFeature (featureGeo: LineFeature, which: 'start' | 'end') {
+    function setPointFromFeature(featureGeo: LineFeature, which: 'start' | 'end') {
       const geom = featureGeo.geometry
       let finalCoords: number[] = fromLonLat([10.133, 54.3233])
 
@@ -986,7 +958,7 @@ export default defineComponent({
 
     /* === Calculate optimal route (Dijkstra) === */
 
-    function calculateOptimalRoute () {
+    function calculateOptimalRoute() {
       if (!state.start || !state.end) return
 
       const startKey = state.start.stationKey
@@ -1043,6 +1015,8 @@ export default defineComponent({
         const a = stationGraph[aKey]
         const b = stationGraph[bKey]
         if (!a || !b) continue
+        const aNode = a as StationNode
+        const bNode = b as StationNode
 
         const commonLines = a.lines.filter((l) => b.lines.includes(l))
         const lineId = commonLines[0] ?? a.lines[0] ?? '1'
@@ -1050,10 +1024,10 @@ export default defineComponent({
         if (!segments.length || segments[segments.length - 1].lineId !== lineId) {
           segments.push({
             lineId,
-            coordinates: [a.coord, b.coord],
+            coordinates: [aNode.coord, bNode.coord],
           })
         } else {
-          segments[segments.length - 1].coordinates.push(b.coord)
+          segments[segments.length - 1].coordinates.push(bNode.coord)
         }
       }
 
@@ -1064,7 +1038,7 @@ export default defineComponent({
 
     /* === visualize route === */
 
-    function visualizeRoute (route: SimpleRoute[] | null) {
+    function visualizeRoute(route: SimpleRoute[] | null) {
       routeSource.clear()
       if (!route || !route.length) return
 
@@ -1084,7 +1058,7 @@ export default defineComponent({
 
     /* === build coords for animation === */
 
-    async function buildRouteCoordinates (): Promise<number[][]> {
+    async function buildRouteCoordinates(): Promise<number[][]> {
       if (!state.currentRoute) {
         return state.start && state.end ? [state.start.coord, state.end.coord] : []
       }
@@ -1109,7 +1083,7 @@ export default defineComponent({
       return dedup
     }
 
-    function fitToOriginalExtent () {
+    function fitToOriginalExtent() {
       if (map.value && originalExtent) {
         try {
           map.value.getView().fit(originalExtent, {
@@ -1123,7 +1097,7 @@ export default defineComponent({
       }
     }
 
-    function animateAlongCoordinates (coords: number[][]) {
+    function animateAlongCoordinates(coords: number[][]) {
       return new Promise<void>((resolve) => {
         if (!map.value || !coords || coords.length === 0) {
           resolve()
@@ -1190,7 +1164,7 @@ export default defineComponent({
       })
     }
 
-    async function startTravel () {
+    async function startTravel() {
       if (!state.start || !state.end || !map.value || state.animating) return
 
       state.animating = true
@@ -1216,7 +1190,7 @@ export default defineComponent({
 
     /* === controls and helpers === */
 
-    function clearSelection () {
+    function clearSelection() {
       state.start = null
       state.end = null
       state.currentRoute = null
@@ -1238,16 +1212,16 @@ export default defineComponent({
       fitToOriginalExtent()
     }
 
-    function filterByLine () {
+    function filterByLine() {
       const src = styledVectorLayer.getSource() as VectorSource
       src.changed()
     }
 
-    function getFeatureType (feature: LineFeature): string {
+    function getFeatureType(feature: LineFeature): string {
       return feature.geometry.type === 'Point' ? 'Station' : 'Line Segment'
     }
 
-    function toggleDebug () {
+    function toggleDebug() {
       debug.show = !debug.show
     }
 
@@ -1315,7 +1289,7 @@ header {
   align-items: center;
 }
 
-.controls > * {
+.controls>* {
   margin: 0;
 }
 
@@ -1377,6 +1351,10 @@ select option {
   background: white;
   color: #2c3e50;
   padding: 0.5rem;
+}
+
+.search-box input {
+  color: black;
 }
 
 select option:hover {
@@ -1504,10 +1482,12 @@ main {
 
 .search-box input {
   width: 100%;
+  background-color: white;
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
   border: 1px solid #bdc3c7;
   font-size: 1rem;
+
 }
 
 .stations-list {
@@ -1642,5 +1622,10 @@ main {
 
 .end-marker {
   color: #e74c3c;
+}
+
+.stations-list {
+  color: black;
+  /* or #000, or rgb(0,0,0) */
 }
 </style>
