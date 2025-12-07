@@ -57,9 +57,37 @@ App available at:
 ---
 
 ##  Build for Production
-cost = distance + transferPenalty (if line changes)
+```bash
+npm run build
+```
+---
+
+## 📁 Project Structure
+```
+src/
+ ├── components/
+ │    └── MapView.vue       # Main routing + map logic
+ ├── assets/
+ ├── App.vue
+ ├── main.ts
+ └── style.css
 ```
 
+---
+##  Route Algorithm (Optimal Path Logic)
+
+The app builds a graph:
+
+### ✔ Nodes → Stations  
+### ✔ Edges → Neighbor connections  
+### ✔ Weights →  
+- Station-to-station distance  
+- + Line-transfer penalty  
+Formula:
+
+```
+cost = distance + transferPenalty (if line changes)
+```
 This produces realistic routes.
 
 ### Example: Wikkanal → Samwerstrasse  
